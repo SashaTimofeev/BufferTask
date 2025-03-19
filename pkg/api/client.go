@@ -1,4 +1,4 @@
-package client
+package api
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-// Client - client for working with API
+// Client for working with API
 type Client struct {
 	SaveFactURL string
 	GetFactsURL string
@@ -21,7 +21,7 @@ type Client struct {
 	httpClient  *http.Client
 }
 
-// NewClient - create new client
+// Create new client
 func NewClient(saveFactURL, getFactsURL, token string) *Client {
 	return &Client{
 		SaveFactURL: saveFactURL,
@@ -33,7 +33,7 @@ func NewClient(saveFactURL, getFactsURL, token string) *Client {
 	}
 }
 
-// GetFacts - get facts by period
+// Get facts by period
 func (c *Client) GetFacts(ctx context.Context, periodStart, periodEnd, periodKey string, indicatorToMoID int) (string, error) {
 	// Forming request data
 	form := url.Values{}
@@ -90,6 +90,10 @@ func (c *Client) SaveFact(ctx context.Context, fact model.Fact) error {
 
 	// Create new POST request
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.SaveFactURL, strings.NewReader(form.Encode()))
+	if err != nil {
+		log.Printf("Error creating request: %v\n", err)
+		return fmt.Errorf("Error creating request: %w", err)
+	}
 
 	// Set headers
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -105,6 +109,7 @@ func (c *Client) SaveFact(ctx context.Context, fact model.Fact) error {
 	// Check response status code
 	if resp.StatusCode != http.StatusOK {
 		bodyBytes, _ := io.ReadAll(resp.Body)
+		log.Printf("Failed to save fact, status: %s, body: %s", resp.Status, string(bodyBytes))
 		return fmt.Errorf("Failed to save fact, status: %s, body: %s", resp.Status, string(bodyBytes))
 	}
 
